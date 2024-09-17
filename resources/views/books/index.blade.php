@@ -1,59 +1,77 @@
 @extends('layouts.app')
+
+@section('title')
+Book Reviews
+@endsection
+
 @section('content')
+
+  <h3 class="text-3xl font-bold text-center ">Books</h3>  
+
+  <form action="{{ route('books.index') }}" method="GET" class="flex mx-auto mt-5" style="max-width: 800px">
     
-  <h1 class="mb-10 text-2xl text-center">Books</h1>
+    <input class="flex-1 px-3 py-2 border border-gray-300 rounded-md form-input me-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+      type="search" name="title" value="{{ request('title') }}"
+      placeholder="Search books by title..." aria-label="Search"/>
+      
+    <input type="hidden" name="filter" value="{{ request('filter') }}">
+    
+    <button class="px-4 py-2 text-white bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+      type="submit"><i class="fa-solid fa-magnifying-glass"></i> </button>
 
-
-  <form class="">
-    <div class="mx-auto mb-6 max-w-80">
-        <div class="relative">
-          <input
-            class="w-full py-2 pl-3 text-sm border-2 rounded-lg"
-            placeholder="UI Kits, Dashboards..." 
-          />
-          <button
-            class="absolute top-1 right-1 flex items-center rounded bg-slate-800 py-1 px-2.5 border border-transparent text-center text-sm text-white "
-            type="button"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-2">
-              <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clip-rule="evenodd" />
-            </svg>
-             Search
-          </button> 
-        </div>
-      </div>
+    <a href="{{ route('books.index') }}" class="px-4 py-2 text-white bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ms-1">
+      <i class="fa-solid fa-xmark"></i> </a>
+      
   </form>
 
-
-  <ul class="space-y-3">
+  <div class="h-6 mx-auto mt-4 bg-white rounded-lg shadow-md" style="max-width: 1000px">
+    @php
+      $filters = [
+        '' => 'latest',
+        'popular_last_month' => 'Popular last month',
+        'popular_last_6months' => 'Popular last 6 months',
+        'highest_rated_last_month' => 'Highest rated last month',
+        'highest_rated_last_6months' => 'Highest rated last 6 months'
+      ];
+    @endphp
+    <!-- Only one ul for the tabs -->
+    <ul class="flex justify-center mb-4 space-x-2 border-b border-gray-200">
+      @foreach ($filters as $key => $label)
+        <li>
+          <a class="px-4 py-2 text-sm font-bold {{ request('filter') === $key || (request('filter') === null && $key === '') ? 'text-black border-b-2 border-black' : 'text-gray-600' }}" 
+            href="{{ route('books.index', [...request()->query(), 'filter' => $key]) }}">{{ $label }}</a>
+        </li>
+      @endforeach
+    </ul>
+  </div>
+  
+  <ol class="mx-auto mb-5 bg-white rounded-lg shadow-md list-group" style="max-width: 1000px">
     @forelse ($books as $book)
-    <li class="p-4 mb-4 bg-white rounded-lg shadow-md" style="border: 1px solid black">
-        <div class="book-item">
-          <div
-            class="flex flex-wrap items-center justify-between">
-            <div class="flex-grow w-full sm:w-auto">
-              <a href="{{ route('books.show', ['book' => $book]) }}" class="text-lg font-bold underline book-title">{{ $book->title }}</a> <br>
-              <span class="text-sm book-author">by {{ $book->author }}</span>
-            </div>
-            <div>
-              <div class="flex">
-                <span>{{ number_format($book->reviews_avg_rating, 1) }}</span> <img style="margin-top: -4px" src="{{ asset('assets/img/star5.jpg') }}" width="30px" alt="">
-              </div>
-              <div class="book-review-count">
-                out of {{ $book->reviews_count }} {{ Str::plural('review', $book->reviws_count) }}
-              </div>
-            </div>
-          </div>
+      <li class="flex items-center justify-between p-4 border-b border-gray-200">
+        <div class="flex-1">
+          <div class="text-lg font-semibold text-blue-600 underline"><a href="{{ route('books.show', ['book' => $book]) }}" class="text-gray-800">{{ $book->title }}</a></div>
+          <div class="text-gray-600">{{ $book->author }}</div>
+        </div>
+        <div class="flex flex-col items-end">
+          <span class="text-sm font-bold">
+            {{ number_format($book->reviews_avg_rating, 1) }} ratings
+          </span>
+          <span class="text-sm"> of <span class="font-bold">{{ $book->reviews_count }}</span> {{ Str::plural("review", $book->reviews_count) }}</span>
         </div>
       </li>
     @empty
-    <li class="p-8 mb-4 text-center shadow-md">
-        <div class="flex justify-center">
-          <p class="mr-5 text-center empty-text">No books found!</p>
-          <a href="{{ route('books.index') }}" class="font-bold text-center underline text-md">Reset criteria</a>
+      <div class="flex justify-center p-4 bg-white border-b border-gray-200 h-72">
+        <div class="mt-10 text-center">
+          <!-- FontAwesome search icon -->
+          <i class="mb-4 text-2xl text-gray-500 fas fa-search"></i>
+          <h1 class="mb-4 text-2xl font-bold text-gray-800">No Results Found</h1>
+          <p class="mb-6 text-lg text-gray-600">System couldn’t find any books matching your search.</p>
+          <a href="{{ route('books.index') }}" class="px-4 py-2 text-white transition bg-black rounded hover:bg-slate-700">
+            <i class="mr-2 fas fa-arrow-left"></i> Go Back
+          </a>
         </div>
-      </li>
+      </div>
     @endforelse
-  </ul>
-  
+  </ol>
+
 @endsection
